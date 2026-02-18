@@ -15,10 +15,6 @@ const port = 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// dotenv.config({
-//   override: true,  // overrides any other env files
-//   path: path.join(__dirname, 'dev.env') // dynamic path should be used in real apps
-// })
 if (process.env.NODE_ENV !== "production") {
   dotenv.config({
     override: true, // overrides any other env files
@@ -41,7 +37,6 @@ const { Pool } = pkg;
 //   database: process.env.DATABASE,
 //   password: process.env.PASSWORD,
 //   port: process.env.PORT,
-
 // });
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -49,9 +44,6 @@ const pool = new Pool({
     rejectUnauthorized: false,
   },
 });
-
-// const result = await pool.query('SELECT * FROM moons')
-// console.log(result.rows)
 
 app.use((req, res, next) => {
   console.log("Time:", Date.now());
@@ -88,10 +80,9 @@ app.get("/moons", async (req, res) => {
 });
 
 app.get("/moons/:name", async (req, res) => {
-  // gets list of moon names from database
   const name = req.params.name;
 
-  // Basic validation to avoid overly long or empty values.
+  // validation to avoid overly long or empty values.
   if (
     typeof name !== "string" ||
     name.trim().length === 0 ||
@@ -148,7 +139,7 @@ app.get("/planets/:id", async (req, res) => {
     }
     const planets = await pool.query("SELECT * FROM planets WHERE id = $1", [planetId]);
     const planetsData = planets.rows;
-    res.send(planetsData);
+    res.json(planetsData);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -184,10 +175,18 @@ app.get("/planets/:id/moons", async (req, res) => {
 });
 
 app.post("/planets", async (req, res) => {
-  const planet = req.body;
-  // const addPlanet = await pool.query('INSERT INTO planets (name, discovered_at) VALUES ($1, $2)', [planet.name, planet.discovered_at]);
-  res.status(201).json({ message: "Planet created", planet });
-  // res.send(addPlanet)
+  try {
+    const planet = req.body;
+    const addPlanet = await pool.query(
+      'INSERT INTO planets (name, discovered_at) VALUES ($1, $2) RETURNING *',
+      [planet.name, planet.discovered_at]
+    );
+    res.status(201).json({ message: "Planet created", planet: addPlanet.rows[0] });
+  } catch (error) {
+    console.error("Error creating planet:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+  
 });
 
 // always use try catch. In industry, you should log errors using a loggin service such as Sentry
