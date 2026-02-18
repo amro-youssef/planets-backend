@@ -163,19 +163,3 @@ Creates a new category.
 
 Returns `201 Created`.
 
-------------------------------------------------------------------------
-
-## 👋 Greeting Endpoint
-
-### `GET /greet?name=yourname`
-
-Simple test route.
-
-Example:
-
-    GET /greet?name=amro
-
-Response:
-
-    Hello, amro
-
