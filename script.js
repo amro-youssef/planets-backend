@@ -23,8 +23,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
-// dotenv.config();
-
 // CORS allows your front-end app (running on a different port) to make API calls to your back-end
 // app.use(cors({ origin: 'http://localhost:5173' }))
 
@@ -50,22 +48,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cookieParser());
-
-// By default, Express does not automatically read JSON bodies. You need to add a middleware to handle this.
-// This allows you to access data sent in the body of a POST or PUT request via req.body.
+// app.use(cookieParser());
 app.use(express.json());
-app.use(express.static("public"));
-
-app.get("/set-cookie", (req, res) => {
-  // cookie-parser library used to set cookies. Used to store things such as session information
-  res.cookie("theme", "dark");
-  res.send("Cookie set");
-});
-
-app.get("/read-cookie", (req, res) => {
-  res.send(`Theme: ${req.cookies.theme}`);
-});
+// app.use(express.static("public"));
 
 app.get("/moons", async (req, res) => {
   // gets list of moon names from database
@@ -114,6 +99,18 @@ app.get("/missions", async (req, res) => {
     const moonTable = await pool.query("SELECT * FROM missions");
     const moons = moonTable.rows;
     res.send(moons);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/categories", async (req, res) => {
+  // gets list of moon names from database
+  try {
+    const categories = await pool.query("SELECT * FROM categories");
+    const categoriesData = categories.rows;
+    res.send(categoriesData);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -186,16 +183,46 @@ app.post("/planets", async (req, res) => {
     console.error("Error creating planet:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-  
 });
 
-// always use try catch. In industry, you should log errors using a loggin service such as Sentry
-app.get("/data", async (req, res) => {
+app.post("/missions", async (req, res) => {
   try {
-    const data = await fetchDataFromDatabase();
-    res.json(data);
+    const mission = req.body;
+    const addMission = await pool.query(
+      'INSERT INTO missions (name, launch_date) VALUES ($1, $2) RETURNING *',
+      [mission.name, mission.launch_date]
+    );
+    res.status(201).json({ message: "Mission added", mission: addMission.rows[0] });
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error adding mission:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/categories", async (req, res) => {
+  try {
+    const category = req.body;
+    const addCategory = await pool.query(
+      'INSERT INTO categories (category) VALUES ($1) RETURNING *',
+      [category.category]
+    );
+    res.status(201).json({ message: "Category added", category: addCategory.rows[0] });
+  } catch (error) {
+    console.error("Error adding category:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/moons", async (req, res) => {
+  try {
+    const moon = req.body;
+    const addMoon = await pool.query(
+      'INSERT INTO moons (name, planet_id, discovered_at) VALUES ($1, $2, $3) RETURNING *',
+      [moon.name, moon.planet_id, moon.discovered_at]
+    );
+    res.status(201).json({ message: "Moon created", moon: addMoon.rows[0] });
+  } catch (error) {
+    console.error("Error creating moon:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
