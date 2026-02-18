@@ -30,12 +30,19 @@ app.use(cors({ origin: 'http://localhost:5173' }))
 const { Pool } = pkg
 
 
+// const pool = new Pool({
+//   user: process.env.DBUSER,
+//   host: process.env.HOST,
+//   database: process.env.DATABASE,
+//   password: process.env.PASSWORD,
+//   port: process.env.PORT,
+
+// });
 const pool = new Pool({
-  user: process.env.DBUSER,
-  host: process.env.HOST,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: process.env.PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 
 });
 
