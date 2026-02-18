@@ -16,10 +16,18 @@ const port = 3000
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-dotenv.config({
-  override: true,  // overrides any other env files
-  path: path.join(__dirname, 'dev.env') // dynamic path should be used in real apps
-})
+// dotenv.config({
+//   override: true,  // overrides any other env files
+//   path: path.join(__dirname, 'dev.env') // dynamic path should be used in real apps
+// })
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({
+    override: true,  // overrides any other env files
+    path: path.join(__dirname, 'dev.env')
+  })
+}
+console.log("DATABASE_URL:", process.env.DATABASE_URL)
+
 // dotenv.config();
 
 // CORS allows your front-end app (running on a different port) to make API calls to your back-end
@@ -58,8 +66,8 @@ try{
     // client.release()
 }
 
-const result = await pool.query('SELECT * FROM moons')
-console.log(result.rows)
+// const result = await pool.query('SELECT * FROM moons')
+// console.log(result.rows)
 
 app.use((req, res, next) => {
   console.log('Time:', Date.now())
