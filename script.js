@@ -143,9 +143,40 @@ app.get("/planets", async (req, res) => {
 app.get("/planets/:id", async (req, res) => {
   try {
     const planetId = parseInt(req.params.id);
+    if (Number.isNaN(planetId)) {
+      return res.status(400).json({ error: "Invalid planet id" });
+    }
     const planets = await pool.query("SELECT * FROM planets WHERE id = $1", [planetId]);
     const planetsData = planets.rows;
     res.send(planetsData);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/planets/:id/moons", async (req, res) => {
+  try {
+    const planetId = parseInt(req.params.id);
+    if (Number.isNaN(planetId)) {
+      return res.status(400).json({ error: "Invalid planet id" });
+    }
+
+    const q = `
+      SELECT
+        m.name AS moon,
+        p.name AS planet
+      FROM
+        moons AS m
+      JOIN
+        planets AS p
+      ON
+        m.planet_id = p.id
+      WHERE
+        p.id = $1
+    `;
+    const result = await pool.query(q, [planetId]);
+    res.send(result.rows);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal server error" });
