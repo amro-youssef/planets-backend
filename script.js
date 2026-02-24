@@ -176,7 +176,7 @@ app.post("/planets", async (req, res) => {
     const planet = req.body;
     const addPlanet = await pool.query(
       'INSERT INTO planets (name, discovered_at, image) VALUES ($1, $2, $3) RETURNING *',
-      [planet.name, planet.discovered_at, planet.image_url]
+      [planet.name, planet.discovered_at, planet.image]
     );
     res.status(201).json({ message: "Planet created", planet: addPlanet.rows[0] });
   } catch (error) {
@@ -218,7 +218,7 @@ app.post("/moons", async (req, res) => {
     const moon = req.body;
     const addMoon = await pool.query(
       'INSERT INTO moons (planet_id, name, discovered_at, image) VALUES ($1, $2, $3, $4) RETURNING *',
-      [moon.planet_id, moon.name, moon.discovered_at, moon.image_url]
+      [moon.planet_id, moon.name, moon.discovered_at, moon.image]
     );
     res.status(201).json({ message: "Moon created", moon: addMoon.rows[0] });
   } catch (error) {
