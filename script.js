@@ -130,28 +130,39 @@ app.get("/planets", async (req, res) => {
 
 app.get("/planets/:id", async (req, res) => {
   try {
-    const planetId = parseInt(req.params.id);
+    const planetId = parseInt(req.params.id, 10);
     if (Number.isNaN(planetId)) {
       return res.status(400).json({ error: "Invalid planet id" });
     }
-    const planets = await pool.query("SELECT * FROM planets WHERE id = $1", [planetId]);
-    const planetsData = planets.rows;
-    res.json(planetsData);
+
+    const result = await pool.query("SELECT * FROM planets WHERE id = $1", [planetId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Planet not found" });
+    }
+
+    // return single resource for id lookup
+    res.json(result.rows[0]);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-app.get("/planets/:name", async (req, res) => {
+// Use a separate route for name-based lookups to avoid conflict with numeric id route
+app.get("/planets/name/:name", async (req, res) => {
   try {
-    const planetName = String(req.params.name);
-    if (!planetName) {
+    const planetName = String(req.params.name).trim();
+    if (planetName.length === 0 || planetName.length > 200) {
       return res.status(400).json({ error: "Invalid planet name" });
     }
-    const planets = await pool.query("SELECT * FROM planets WHERE UPPER(name) = UPPER($1)", [planetName]);
-    const planetsData = planets.rows;
-    res.json(planetsData);
+
+    // case-insensitive exact match using ILIKE
+    const result = await pool.query("SELECT * FROM planets WHERE name ILIKE $1", [planetName]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Planet not found" });
+    }
+
+    // return single resource for name lookup
+    res.json(result.rows[0]);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Internal server error" });
