@@ -143,6 +143,21 @@ app.get("/planets/:id", async (req, res) => {
   }
 });
 
+app.get("/planets/:name", async (req, res) => {
+  try {
+    const planetName = String(req.params.name);
+    if (!planetName) {
+      return res.status(400).json({ error: "Invalid planet name" });
+    }
+    const planets = await pool.query("SELECT * FROM planets WHERE UPPER(name) = UPPER($1)", [planetName]);
+    const planetsData = planets.rows;
+    res.json(planetsData);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.get("/planets/:id/moons", async (req, res) => {
   try {
     const planetId = parseInt(req.params.id);
